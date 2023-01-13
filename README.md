@@ -1,6 +1,6 @@
 # Kernel Herding
 
-An implementation of the Kernel Herding algorithm from the paper https://arxiv.org/abs/1203.3472 and https://arxiv.org/abs/1204.1664.
+An implementation of the Kernel Herding algorithm from the paper https://arxiv.org/abs/1203.3472 and https://arxiv.org/abs/1204.1664. See the .ipynb file for an example of its use.
 
 ## Environment
 The environment is being managed by conda with configuration stored in the 'env.yml' file. To create your environment just use `conda env create --file env.yml` from the base of the repository. To update using a new config use `conda env update --file env.yml --prune`.
