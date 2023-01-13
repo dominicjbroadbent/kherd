@@ -90,17 +90,6 @@ class KernelHerding:
             x0 = self._get_best_initial_guess(self.initial_samples, method[2], objective)
             res = minimize(objective, x0, method = method[1])
             
-        elif method[0] == 'global_pca':
-            
-            def objective(x):
-                x = np.atleast_2d(x)
-                value = self.kernel(x, self.transformed_initial_samples).mean(axis = 1)
-                value -= ( 1 / ( self.super_samples.shape[0] + 1 ) ) * self.kernel(x, self.super_samples).sum(axis = 1)
-                return -value
-            
-            x0 = self._get_best_initial_guess(self.transformed_initial_samples, method[3], objective)
-            res = minimize(objective, x0, method = method[2])
-            
         if res['message'] != 'Optimization terminated successfully.':
             raise Exception(f'Optimisation error: {res["message"]}')
             
