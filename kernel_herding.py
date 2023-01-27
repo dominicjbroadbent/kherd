@@ -54,11 +54,11 @@ class KernelHerding:
         Do kernel herding for a specified number of iterations, optimising over the entire space globally, or 
         restricting attention locally to just the initial samples.
         
-        If you want to local herding then the method tuple should have the form
+        For local herding then the method tuple should have the form
                     method  = ('local', True) or ('local', False)
-        where the True boolean corresponds to restricting super-samples to be unique
+        where the boolean corresponds to restricting the super-samples to be unique (True) or not (False)
         
-        If you want global herding then the method tuple should have the form
+        For global herding then the method tuple should have the form
                     method  = ('global', 'opt_method', num_samples)
         where the 'opt_method' string corresponds to a scipy.optimize.minimize optimisation method and num_samples
         is the number of initial samples that should be used to find the best initial guess for each herding iteration.
@@ -78,17 +78,14 @@ class KernelHerding:
         
     def _globally_herd_next_sample(self, method):
         """Choose the next best super sample by globally optimising the kernel herding objective function"""
-        
-        if method[0] == 'global':
+        def objective(x):
+            x = np.atleast_2d(x)
+            value = self.kernel(x, self.initial_samples).mean(axis = 1)
+            value -= ( 1 / ( self.super_samples.shape[0] + 1 ) ) * self.kernel(x, self.super_samples).sum(axis = 1)
+            return -value
             
-            def objective(x):
-                x = np.atleast_2d(x)
-                value = self.kernel(x, self.initial_samples).mean(axis = 1)
-                value -= ( 1 / ( self.super_samples.shape[0] + 1 ) ) * self.kernel(x, self.super_samples).sum(axis = 1)
-                return -value
-            
-            x0 = self._get_best_initial_guess(self.initial_samples, method[2], objective)
-            res = minimize(objective, x0, method = method[1])
+        x0 = self._get_best_initial_guess(self.initial_samples, method[2], objective)
+        res = minimize(objective, x0, method = method[1])
             
         if res['message'] != 'Optimization terminated successfully.':
             raise Exception(f'Optimisation error: {res["message"]}')
@@ -106,7 +103,7 @@ class KernelHerding:
         """Choose the next best super sample from the set of initial samples"""
         num_samples = self.initial_samples.shape[0]
         
-        # Approximate the expectation at each initial sample, do this only once as these stay the same
+        # Approximate the expectation of the kernel function evaluated at each initial sample, do this only once as these stay the same
         try:
             self.expectations 
         except AttributeError:
@@ -143,7 +140,7 @@ class KernelHerding:
         return super_sample, super_sample_index    
     
     def compute_herd_error(self, f):
-        """Compute the RMSE wrt a function f of super samples versus empirical distribution (eq 17 of paper)"""
+        """Compute the RMSE wrt a function f of super samples versus empirical distribution"""
         mu_p = f( np.mean(self.initial_samples, axis = 0) )
         
         herd_error = np.zeros( ( self.super_samples.shape[0], self.super_samples.shape[1] ) )
@@ -156,7 +153,7 @@ class KernelHerding:
         return np.sqrt( ( 1 / self.super_samples.shape[1] ) * np.sum( herd_error, axis = 1 ) )
         
     def compute_iid_error(self, f):
-        """Compute the RMSE wrt a function f of iid samples versus empirical distribution (eq 17 of paper)"""
+        """Compute the RMSE wrt a function f of iid samples versus empirical distribution"""
         # Compute the sample mean   
         mu_p = f( np.mean(self.initial_samples, axis = 0) )
         
