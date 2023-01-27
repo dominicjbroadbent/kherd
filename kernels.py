@@ -9,8 +9,7 @@ class BaseKernel:
     def __call__(self, x, y):
         """Evaluate the kernel function at (x, y)"""
         raise NotImplementedError()
-    
-            
+        
 class Gaussian(BaseKernel):
     def __init__(self, lengthscale = 0.5):
         """Initialise the Gaussian kernel"""
